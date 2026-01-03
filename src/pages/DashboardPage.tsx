@@ -48,12 +48,14 @@ import {
   Assignment as AssignmentIcon,
   Settings as SettingsIcon,
   Menu as MenuIcon,
+  PersonAdd as PersonAddIcon,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { accountService } from "../services/accountService";
 import { useAuth } from "../context/AuthContext";
 import { UpdatePinModal } from "../components/UpdatePinModal";
 import { DepositModal } from "../components/DepositModal";
+import { CreateAccountModal } from "../components/CreateAccountModal";
 import type { Account, AccountStatus } from "../types";
 
 export const DashboardPage: React.FC = () => {
@@ -75,6 +77,7 @@ export const DashboardPage: React.FC = () => {
   // Modal states
   const [updatePinModalOpen, setUpdatePinModalOpen] = useState(false);
   const [depositModalOpen, setDepositModalOpen] = useState(false);
+  const [createAccountModalOpen, setCreateAccountModalOpen] = useState(false);
   
   // Update status dialog
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
@@ -186,6 +189,10 @@ export const DashboardPage: React.FC = () => {
         return "default";
     }
   };
+
+  // Filter accounts by status
+  const activeAccounts = accounts.filter(acc => acc.accountStatus === "ACTIVE");
+  const lockedAccounts = accounts.filter(acc => acc.accountStatus === "LOCKED");
 
   const drawerWidth = 260;
 
@@ -381,8 +388,8 @@ export const DashboardPage: React.FC = () => {
                 </Typography>
                 <Button
                   variant="contained"
-                  startIcon={<AccountBalanceIcon />}
-                  onClick={() => setDepositModalOpen(true)}
+                  startIcon={<PersonAddIcon />}
+                  onClick={() => setCreateAccountModalOpen(true)}
                   sx={{
                     borderRadius: 2,
                     px: 3,
@@ -397,7 +404,7 @@ export const DashboardPage: React.FC = () => {
                     },
                   }}
                 >
-                  Deposit
+                  Create Account
                 </Button>
               </Box>
 
@@ -417,98 +424,189 @@ export const DashboardPage: React.FC = () => {
                 </Fade>
               )}
 
-              <TableContainer
-                sx={{
-                  borderRadius: 2,
-                  overflow: "hidden",
-                }}
-              >
-                <Table>
-                  <TableHead>
-                    <TableRow
+              {loading ? (
+                <Box sx={{ textAlign: "center", py: 4 }}>
+                  <Typography>Loading...</Typography>
+                </Box>
+              ) : (
+                <>
+                  {/* ACTIVE Accounts Section */}
+                  <Box sx={{ mb: 4 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <Chip
+                        label="ACTIVE"
+                        color="success"
+                        sx={{ fontWeight: 600, mr: 2 }}
+                      />
+                      <Typography variant="body2" color="text.secondary">
+                        {activeAccounts.length} account(s)
+                      </Typography>
+                    </Box>
+                    <TableContainer
                       sx={{
-                        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                        borderRadius: 2,
+                        overflow: "hidden",
+                        border: "2px solid rgba(76, 175, 80, 0.3)",
                       }}
                     >
-                      <TableCell sx={{ color: "white", fontWeight: 600 }}>Account Number</TableCell>
-                      <TableCell sx={{ color: "white", fontWeight: 600 }}>Full Name</TableCell>
-                      <TableCell sx={{ color: "white", fontWeight: 600 }}>Balance</TableCell>
-                      <TableCell sx={{ color: "white", fontWeight: 600 }}>Status</TableCell>
-                      <TableCell sx={{ color: "white", fontWeight: 600 }}>Created At</TableCell>
-                      <TableCell align="right" sx={{ color: "white", fontWeight: 600 }}>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center">
-                      Loading...
-                    </TableCell>
-                  </TableRow>
-                ) : accounts.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center">
-                      No accounts found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  accounts.map((account, index) => (
-                    <Grow
-                      in
-                      key={account.accountId}
-                      timeout={300 + index * 100}
-                    >
-                      <TableRow
-                        sx={{
-                          transition: "all 0.3s ease",
-                          "&:hover": {
-                            background: "linear-gradient(90deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)",
-                            transform: "scale(1.01)",
-                            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-                          },
-                        }}
-                      >
-                        <TableCell sx={{ fontWeight: 500 }}>{account.accountNumber}</TableCell>
-                        <TableCell>{account.fullName || "N/A"}</TableCell>
-                        <TableCell sx={{ fontWeight: 600, color: "#667eea" }}>
-                          ${account.balance.toLocaleString()}
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={account.accountStatus}
-                            color={getStatusColor(account.accountStatus)}
-                            size="small"
+                      <Table>
+                        <TableHead>
+                          <TableRow
                             sx={{
-                              fontWeight: 600,
-                              borderRadius: 2,
-                              px: 1,
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {new Date(account.createdAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell align="right">
-                          <IconButton
-                            onClick={(e) => handleMenuOpen(e, account)}
-                            sx={{
-                              transition: "all 0.3s",
-                              "&:hover": {
-                                background: "linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)",
-                                transform: "rotate(90deg)",
-                              },
+                              background: "linear-gradient(135deg, #4caf50 0%, #81c784 100%)",
                             }}
                           >
-                            <MoreVertIcon />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    </Grow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                            <TableCell sx={{ color: "white", fontWeight: 600 }}>Account Number</TableCell>
+                            <TableCell sx={{ color: "white", fontWeight: 600 }}>Full Name</TableCell>
+                            <TableCell sx={{ color: "white", fontWeight: 600 }}>Balance</TableCell>
+                            <TableCell sx={{ color: "white", fontWeight: 600 }}>Created At</TableCell>
+                            <TableCell align="right" sx={{ color: "white", fontWeight: 600 }}>Actions</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {activeAccounts.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={5} align="center">
+                                No active accounts
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            activeAccounts.map((account, index) => (
+                              <Grow
+                                in
+                                key={account.accountId}
+                                timeout={300 + index * 100}
+                              >
+                                <TableRow
+                                  sx={{
+                                    transition: "all 0.3s ease",
+                                    "&:hover": {
+                                      background: "rgba(76, 175, 80, 0.05)",
+                                      transform: "scale(1.01)",
+                                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+                                    },
+                                  }}
+                                >
+                                  <TableCell sx={{ fontWeight: 500 }}>{account.accountNumber}</TableCell>
+                                  <TableCell>{account.fullName || "N/A"}</TableCell>
+                                  <TableCell sx={{ fontWeight: 600, color: "#4caf50" }}>
+                                    ${account.balance.toLocaleString()}
+                                  </TableCell>
+                                  <TableCell>
+                                    {new Date(account.createdAt).toLocaleDateString()}
+                                  </TableCell>
+                                  <TableCell align="right">
+                                    <IconButton
+                                      onClick={(e) => handleMenuOpen(e, account)}
+                                      sx={{
+                                        transition: "all 0.3s",
+                                        "&:hover": {
+                                          background: "rgba(76, 175, 80, 0.1)",
+                                          transform: "rotate(90deg)",
+                                        },
+                                      }}
+                                    >
+                                      <MoreVertIcon />
+                                    </IconButton>
+                                  </TableCell>
+                                </TableRow>
+                              </Grow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Box>
+
+                  {/* LOCKED Accounts Section */}
+                  <Box>
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <Chip
+                        label="LOCKED"
+                        color="error"
+                        sx={{ fontWeight: 600, mr: 2 }}
+                      />
+                      <Typography variant="body2" color="text.secondary">
+                        {lockedAccounts.length} account(s)
+                      </Typography>
+                    </Box>
+                    <TableContainer
+                      sx={{
+                        borderRadius: 2,
+                        overflow: "hidden",
+                        border: "2px solid rgba(244, 67, 54, 0.3)",
+                      }}
+                    >
+                      <Table>
+                        <TableHead>
+                          <TableRow
+                            sx={{
+                              background: "linear-gradient(135deg, #f44336 0%, #ef5350 100%)",
+                            }}
+                          >
+                            <TableCell sx={{ color: "white", fontWeight: 600 }}>Account Number</TableCell>
+                            <TableCell sx={{ color: "white", fontWeight: 600 }}>Full Name</TableCell>
+                            <TableCell sx={{ color: "white", fontWeight: 600 }}>Balance</TableCell>
+                            <TableCell sx={{ color: "white", fontWeight: 600 }}>Created At</TableCell>
+                            <TableCell align="right" sx={{ color: "white", fontWeight: 600 }}>Actions</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {lockedAccounts.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={5} align="center">
+                                No locked accounts
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            lockedAccounts.map((account, index) => (
+                              <Grow
+                                in
+                                key={account.accountId}
+                                timeout={300 + index * 100}
+                              >
+                                <TableRow
+                                  sx={{
+                                    transition: "all 0.3s ease",
+                                    "&:hover": {
+                                      background: "rgba(244, 67, 54, 0.05)",
+                                      transform: "scale(1.01)",
+                                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+                                    },
+                                  }}
+                                >
+                                  <TableCell sx={{ fontWeight: 500 }}>{account.accountNumber}</TableCell>
+                                  <TableCell>{account.fullName || "N/A"}</TableCell>
+                                  <TableCell sx={{ fontWeight: 600, color: "#f44336" }}>
+                                    ${account.balance.toLocaleString()}
+                                  </TableCell>
+                                  <TableCell>
+                                    {new Date(account.createdAt).toLocaleDateString()}
+                                  </TableCell>
+                                  <TableCell align="right">
+                                    <IconButton
+                                      onClick={(e) => handleMenuOpen(e, account)}
+                                      sx={{
+                                        transition: "all 0.3s",
+                                        "&:hover": {
+                                          background: "rgba(244, 67, 54, 0.1)",
+                                          transform: "rotate(90deg)",
+                                        },
+                                      }}
+                                    >
+                                      <MoreVertIcon />
+                                    </IconButton>
+                                  </TableCell>
+                                </TableRow>
+                              </Grow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Box>
+                </>
+              )}
 
               <TablePagination
                 component="div"
@@ -636,6 +734,13 @@ export const DashboardPage: React.FC = () => {
         onClose={() => setDepositModalOpen(false)}
         onSuccess={fetchAccounts}
         prefilledAccountNumber={selectedAccount?.accountNumber}
+      />
+
+      {/* Create Account Modal */}
+      <CreateAccountModal
+        open={createAccountModalOpen}
+        onClose={() => setCreateAccountModalOpen(false)}
+        onSuccess={fetchAccounts}
       />
     </Box>
   );

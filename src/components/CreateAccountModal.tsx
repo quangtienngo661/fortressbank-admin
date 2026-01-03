@@ -10,16 +10,19 @@ import {
   Slide,
   Box,
   Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import type { TransitionProps } from "@mui/material/transitions";
-import { VpnKey as VpnKeyIcon } from "@mui/icons-material";
+import { PersonAdd as PersonAddIcon } from "@mui/icons-material";
 import { accountService } from "../services/accountService";
 
-interface UpdatePinModalProps {
+interface CreateAccountModalProps {
   open: boolean;
   onClose: () => void;
-  accountId: string;
-  accountNumber: string;
+  onSuccess?: () => void;
 }
 
 const Transition = React.forwardRef(function Transition(
@@ -31,24 +34,63 @@ const Transition = React.forwardRef(function Transition(
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-export const UpdatePinModal: React.FC<UpdatePinModalProps> = ({
+export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
   open,
   onClose,
-  accountId,
-  accountNumber,
+  onSuccess,
 }) => {
-  const [newPin, setNewPin] = useState("");
-  const [confirmPin, setConfirmPin] = useState("");
+  const [userId, setUserId] = useState("");
+  const [accountNumberType, setAccountNumberType] = useState<"PHONE_NUMBER" | "AUTO_GENERATE">("AUTO_GENERATE");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [pin, setPin] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  React.useEffect(() => {
+    if (open) {
+      setUserId("");
+      setAccountNumberType("AUTO_GENERATE");
+      setPhoneNumber("");
+      setPin("");
+      setError("");
+      setSuccess(false);
+    }
+  }, [open]);
+
   const handleClose = () => {
-    setNewPin("");
-    setConfirmPin("");
-    setError("");
-    setSuccess(false);
     onClose();
+  };
+
+  const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+    
+    // If empty, allow it
+    if (value === "") {
+      setPhoneNumber("");
+      return;
+    }
+    
+    // If doesn't start with +84, auto-add it
+    if (!value.startsWith("+84")) {
+      value = "+84" + value.replace(/\D/g, "");
+    }
+    
+    // Remove all non-digits except the + at start
+    const digits = value.substring(3).replace(/\D/g, "");
+    
+    // Limit to 10 digits after +84
+    if (digits.length <= 10) {
+      setPhoneNumber("+84" + digits);
+    }
+  };
+
+  const handlePinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Only allow digits, max 6
+    if (/^\d{0,6}$/.test(value)) {
+      setPin(value);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,31 +99,39 @@ export const UpdatePinModal: React.FC<UpdatePinModalProps> = ({
     setSuccess(false);
 
     // Validation
-    if (newPin !== confirmPin) {
-      setError("New PIN and Confirm PIN do not match");
+    if (!userId.trim()) {
+      setError("User ID is required");
       return;
     }
 
-    if (newPin.length !== 6) {
+    if (accountNumberType === "PHONE_NUMBER") {
+      if (!phoneNumber || !/^\+84\d{9,10}$/.test(phoneNumber)) {
+        setError("Phone number must be in format +84xxxxxxxxx (9-10 digits after +84)");
+        return;
+      }
+    }
+
+    if (pin && pin.length !== 6) {
       setError("PIN must be exactly 6 digits");
-      return;
-    }
-
-    if (!/^\d+$/.test(newPin)) {
-      setError("PIN must contain only digits");
       return;
     }
 
     setLoading(true);
 
     try {
-      await accountService.updatePin(accountId, { newPin });
+      await accountService.createAccount({
+        userId: userId.trim(),
+        accountNumberType,
+        phoneNumber: accountNumberType === "PHONE_NUMBER" ? phoneNumber : undefined,
+        pin: pin || undefined,
+      });
       setSuccess(true);
       setTimeout(() => {
         handleClose();
+        if (onSuccess) onSuccess();
       }, 1500);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to update PIN");
+      setError(err.response?.data?.message || "Failed to create account");
     } finally {
       setLoading(false);
     }
@@ -121,16 +171,11 @@ export const UpdatePinModal: React.FC<UpdatePinModalProps> = ({
             justifyContent: "center",
           }}
         >
-          <VpnKeyIcon />
+          <PersonAddIcon />
         </Box>
-        <Box>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Update PIN
-          </Typography>
-          <Typography variant="body2" sx={{ opacity: 0.9, fontSize: "0.875rem" }}>
-            {accountNumber}
-          </Typography>
-        </Box>
+        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          Create New Account
+        </Typography>
       </DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent sx={{ pt: 3, pb: 2 }}>
@@ -146,6 +191,7 @@ export const UpdatePinModal: React.FC<UpdatePinModalProps> = ({
               {error}
             </Alert>
           )}
+
           {success && (
             <Alert
               severity="success"
@@ -155,7 +201,7 @@ export const UpdatePinModal: React.FC<UpdatePinModalProps> = ({
                 boxShadow: "0 2px 8px rgba(46, 125, 50, 0.2)",
               }}
             >
-              PIN updated successfully!
+              Account created successfully!
             </Alert>
           )}
 
@@ -163,11 +209,10 @@ export const UpdatePinModal: React.FC<UpdatePinModalProps> = ({
             margin="normal"
             required
             fullWidth
-            label="New PIN (6 digits)"
-            type="password"
-            value={newPin}
-            onChange={(e) => setNewPin(e.target.value)}
-            inputProps={{ maxLength: 6 }}
+            label="User ID"
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
+            disabled={loading || success}
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 2,
@@ -181,15 +226,71 @@ export const UpdatePinModal: React.FC<UpdatePinModalProps> = ({
               },
             }}
           />
+
+          <FormControl
+            fullWidth
+            margin="normal"
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+                transition: "all 0.3s",
+                "&:hover": {
+                  boxShadow: "0 4px 12px rgba(102, 126, 234, 0.15)",
+                },
+                "&.Mui-focused": {
+                  boxShadow: "0 4px 12px rgba(102, 126, 234, 0.25)",
+                },
+              },
+            }}
+          >
+            <InputLabel>Account Number Type</InputLabel>
+            <Select
+              value={accountNumberType}
+              label="Account Number Type"
+              onChange={(e) => setAccountNumberType(e.target.value as "PHONE_NUMBER" | "AUTO_GENERATE")}
+              disabled={loading || success}
+            >
+              <MenuItem value="AUTO_GENERATE">Auto Generate</MenuItem>
+              <MenuItem value="PHONE_NUMBER">Phone Number</MenuItem>
+            </Select>
+          </FormControl>
+
+          {accountNumberType === "PHONE_NUMBER" && (
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              label="Phone Number"
+              placeholder="+84xxxxxxxxx"
+              value={phoneNumber}
+              onChange={handlePhoneNumberChange}
+              disabled={loading || success}
+              helperText="Format: +84 followed by 9-10 digits"
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 2,
+                  transition: "all 0.3s",
+                  "&:hover": {
+                    boxShadow: "0 4px 12px rgba(102, 126, 234, 0.15)",
+                  },
+                  "&.Mui-focused": {
+                    boxShadow: "0 4px 12px rgba(102, 126, 234, 0.25)",
+                  },
+                },
+              }}
+            />
+          )}
+
           <TextField
             margin="normal"
-            required
             fullWidth
-            label="Confirm New PIN"
+            label="PIN (Optional, 6 digits)"
             type="password"
-            value={confirmPin}
-            onChange={(e) => setConfirmPin(e.target.value)}
+            value={pin}
+            onChange={handlePinChange}
+            disabled={loading || success}
             inputProps={{ maxLength: 6 }}
+            helperText="Leave empty to skip PIN setup"
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 2,
@@ -204,6 +305,7 @@ export const UpdatePinModal: React.FC<UpdatePinModalProps> = ({
             }}
           />
         </DialogContent>
+
         <DialogActions sx={{ px: 3, pb: 3 }}>
           <Button
             onClick={handleClose}
@@ -222,7 +324,7 @@ export const UpdatePinModal: React.FC<UpdatePinModalProps> = ({
           <Button
             type="submit"
             variant="contained"
-            disabled={loading}
+            disabled={loading || success}
             sx={{
               borderRadius: 2,
               px: 3,
@@ -236,7 +338,7 @@ export const UpdatePinModal: React.FC<UpdatePinModalProps> = ({
               },
             }}
           >
-            {loading ? "Updating..." : "Update PIN"}
+            {loading ? "Creating..." : "Create Account"}
           </Button>
         </DialogActions>
       </form>

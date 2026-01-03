@@ -6,6 +6,7 @@ import type {
   UpdateAccountRequest,
   UpdatePinRequest,
   DepositRequest,
+  CreateAccountRequest,
 } from "../types";
 
 export const accountService = {
@@ -59,18 +60,27 @@ export const accountService = {
     return response.data.data;
   },
 
-  // Update PIN
+  // Update PIN (Admin)
   updatePin: async (
     accountId: string,
     data: UpdatePinRequest
   ): Promise<void> => {
-    await apiClient.put<ApiResponse<void>>(`/accounts/${accountId}/pin`, data);
+    await apiClient.put<ApiResponse<void>>(`/admin/accounts/${accountId}/pin`, data);
   },
 
   // Admin deposit
   deposit: async (data: DepositRequest): Promise<any> => {
     const response = await apiClient.post<ApiResponse<any>>(
       "/transactions/admin/deposit",
+      data
+    );
+    return response.data.data;
+  },
+
+  // Create account for user (Admin)
+  createAccount: async (data: CreateAccountRequest): Promise<Account> => {
+    const response = await apiClient.post<ApiResponse<Account>>(
+      "/admin/accounts",
       data
     );
     return response.data.data;
