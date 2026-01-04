@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Container,
   Box,
@@ -21,14 +21,34 @@ export const LoginPage: React.FC = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const location = useLocation();
+  const { login, isAuthenticated } = useAuth();
+  const hasCheckedAuth = useRef(false);
+  const navigationTimeoutRef = useRef<number | null>(null);
 
-  // Check if already authenticated
+  // Check if already authenticated (only once on mount, with Firefox-safe delay)
   useEffect(() => {
-    if (authService.isAuthenticated()) {
-      navigate("/dashboard", { replace: true });
+    if (!hasCheckedAuth.current) {
+      hasCheckedAuth.current = true;
+      
+      // Use a small delay to avoid Firefox's rapid navigation throttling
+      navigationTimeoutRef.current = setTimeout(() => {
+        if (isAuthenticated || authService.isAuthenticated()) {
+          // Only navigate if we're actually on the login page
+          if (location.pathname === "/login") {
+            navigate("/dashboard", { replace: true });
+          }
+        }
+      }, 0);
     }
-  }, [navigate]);
+
+    return () => {
+      if (navigationTimeoutRef.current) {
+        clearTimeout(navigationTimeoutRef.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,8 +66,11 @@ export const LoginPage: React.FC = () => {
       
       // Navigate to dashboard
       navigate("/dashboard");
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Login failed. Please try again.");
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === 'object' && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : undefined;
+      setError(errorMessage || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
