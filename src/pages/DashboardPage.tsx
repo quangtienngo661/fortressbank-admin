@@ -54,6 +54,7 @@ import { accountService } from "../services/accountService";
 import { useAuth } from "../context/AuthContext";
 import { UpdatePinModal } from "../components/UpdatePinModal";
 import { DepositModal } from "../components/DepositModal";
+import { UserManagementPage } from "./UserManagementPage";
 import type { Account, AccountStatus } from "../types";
 
 export const DashboardPage: React.FC = () => {
@@ -527,6 +528,8 @@ export const DashboardPage: React.FC = () => {
               />
               </Paper>
             </Fade>
+          ) : currentPage === "users" ? (
+            <UserManagementPage />
           ) : (
             <Fade in timeout={800}>
               <Paper

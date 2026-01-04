@@ -65,3 +65,68 @@ export interface LoginRequest {
   username: string;
   password: string;
 }
+
+// User Management types
+export interface AdminUser {
+  id: string;
+  username: string;
+  email: string;
+  fullName: string;
+  citizenId: string;
+  dob: string; // ISO date string
+  phoneNumber: string;
+  enabled: boolean;
+  createdAt: string; // ISO datetime string
+}
+
+export interface CreateUserRequest {
+  username: string;
+  email: string;
+  password: string;
+  fullName: string;
+  dob: string; // ISO date string (YYYY-MM-DD)
+  citizenId: string;
+  phoneNumber: string;
+  accountNumberType: "PHONE_NUMBER" | "AUTO_GENERATE";
+  pin: string;
+  createCard?: boolean;
+  roles?: string[];
+}
+
+export interface UpdateUserRequest {
+  fullName: string;
+  email: string;
+  dob: string; // ISO date string (YYYY-MM-DD)
+  phoneNumber: string;
+}
+
+export interface AccountDto {
+  accountId: string;
+  userId: string;
+  balance: number;
+  createdAt: string;
+  accountNumber: string;
+  accountStatus: string;
+}
+
+export interface CardDto {
+  cardId: string;
+  cardNumber: string;
+  cardHolderName: string;
+  expirationDate: string;
+  status: string;
+  cardType: string;
+}
+
+export interface CreateUserResponse {
+  userId: string;
+  username: string;
+  email: string;
+  fullName: string;
+  citizenId: string;
+  dob: string;
+  phoneNumber: string;
+  createdAt: string;
+  account: AccountDto;
+  card: CardDto | null;
+}
