@@ -72,6 +72,18 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface AdminUserResponse {
+  id: string;
+  username: string;
+  email: string;
+  fullName: string;
+  citizenId: string;
+  dob: string;
+  phoneNumber: string;
+  enabled: boolean;
+  createdAt: string;
+}
+
 // User Management types
 export interface AdminUser {
   id: string;

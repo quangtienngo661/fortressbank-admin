@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -14,10 +14,14 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Autocomplete,
+  CircularProgress,
 } from "@mui/material";
 import type { TransitionProps } from "@mui/material/transitions";
 import { PersonAdd as PersonAddIcon } from "@mui/icons-material";
 import { accountService } from "../services/accountService";
+import { userService } from "../services/userService";
+import type { AdminUserResponse } from "../types";
 
 interface CreateAccountModalProps {
   open: boolean;
@@ -39,7 +43,9 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const [userId, setUserId] = useState("");
+  const [selectedUser, setSelectedUser] = useState<AdminUserResponse | null>(null);
+  const [users, setUsers] = useState<AdminUserResponse[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
   const [accountNumberType, setAccountNumberType] = useState<"PHONE_NUMBER" | "AUTO_GENERATE">("AUTO_GENERATE");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [pin, setPin] = useState("");
@@ -47,9 +53,11 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  React.useEffect(() => {
+  // Fetch users when modal opens
+  useEffect(() => {
     if (open) {
-      setUserId("");
+      fetchUsers();
+      setSelectedUser(null);
       setAccountNumberType("AUTO_GENERATE");
       setPhoneNumber("");
       setPin("");
@@ -57,6 +65,22 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
       setSuccess(false);
     }
   }, [open]);
+
+  const fetchUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const response = await userService.searchUsers({
+        keyword: "",
+        page: 0,
+        size: 100, // Get more users for dropdown
+      });
+      setUsers(response.content);
+    } catch (err: any) {
+      console.error("Failed to fetch users:", err);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
 
   const handleClose = () => {
     onClose();
@@ -99,8 +123,8 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
     setSuccess(false);
 
     // Validation
-    if (!userId.trim()) {
-      setError("User ID is required");
+    if (!selectedUser) {
+      setError("Please select a user");
       return;
     }
 
@@ -120,7 +144,7 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
 
     try {
       await accountService.createAccount({
-        userId: userId.trim(),
+        userId: selectedUser.id,
         accountNumberType,
         phoneNumber: accountNumberType === "PHONE_NUMBER" ? phoneNumber : undefined,
         pin: pin || undefined,
@@ -205,26 +229,43 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
             </Alert>
           )}
 
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            label="User ID"
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
+          <Autocomplete
+            options={users}
+            value={selectedUser}
+            onChange={(_, newValue) => setSelectedUser(newValue)}
+            getOptionLabel={(option) => `${option.username} (${option.fullName || option.email})`}
+            loading={loadingUsers}
             disabled={loading || success}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                borderRadius: 2,
-                transition: "all 0.3s",
-                "&:hover": {
-                  boxShadow: "0 4px 12px rgba(102, 126, 234, 0.15)",
-                },
-                "&.Mui-focused": {
-                  boxShadow: "0 4px 12px rgba(102, 126, 234, 0.25)",
-                },
-              },
-            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                margin="normal"
+                required
+                label="Select User"
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: (
+                    <>
+                      {loadingUsers ? <CircularProgress color="inherit" size={20} /> : null}
+                      {params.InputProps.endAdornment}
+                    </>
+                  ),
+                }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                    transition: "all 0.3s",
+                    "&:hover": {
+                      boxShadow: "0 4px 12px rgba(102, 126, 234, 0.15)",
+                    },
+                    "&.Mui-focused": {
+                      boxShadow: "0 4px 12px rgba(102, 126, 234, 0.25)",
+                    },
+                  },
+                }}
+              />
+            )}
+            sx={{ mt: 1 }}
           />
 
           <FormControl
