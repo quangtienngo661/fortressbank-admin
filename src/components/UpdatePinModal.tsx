@@ -37,7 +37,6 @@ export const UpdatePinModal: React.FC<UpdatePinModalProps> = ({
   accountId,
   accountNumber,
 }) => {
-  const [oldPin, setOldPin] = useState("");
   const [newPin, setNewPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [error, setError] = useState("");
@@ -45,7 +44,6 @@ export const UpdatePinModal: React.FC<UpdatePinModalProps> = ({
   const [loading, setLoading] = useState(false);
 
   const handleClose = () => {
-    setOldPin("");
     setNewPin("");
     setConfirmPin("");
     setError("");
@@ -64,8 +62,8 @@ export const UpdatePinModal: React.FC<UpdatePinModalProps> = ({
       return;
     }
 
-    if (newPin.length < 4 || newPin.length > 6) {
-      setError("PIN must be between 4 and 6 digits");
+    if (newPin.length !== 6) {
+      setError("PIN must be exactly 6 digits");
       return;
     }
 
@@ -77,7 +75,7 @@ export const UpdatePinModal: React.FC<UpdatePinModalProps> = ({
     setLoading(true);
 
     try {
-      await accountService.updatePin(accountId, { oldPin, newPin });
+      await accountService.updatePin(accountId, { newPin });
       setSuccess(true);
       setTimeout(() => {
         handleClose();
@@ -165,29 +163,7 @@ export const UpdatePinModal: React.FC<UpdatePinModalProps> = ({
             margin="normal"
             required
             fullWidth
-            label="Old PIN"
-            type="password"
-            value={oldPin}
-            onChange={(e) => setOldPin(e.target.value)}
-            inputProps={{ maxLength: 6 }}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                borderRadius: 2,
-                transition: "all 0.3s",
-                "&:hover": {
-                  boxShadow: "0 4px 12px rgba(102, 126, 234, 0.15)",
-                },
-                "&.Mui-focused": {
-                  boxShadow: "0 4px 12px rgba(102, 126, 234, 0.25)",
-                },
-              },
-            }}
-          />
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            label="New PIN"
+            label="New PIN (6 digits)"
             type="password"
             value={newPin}
             onChange={(e) => setNewPin(e.target.value)}

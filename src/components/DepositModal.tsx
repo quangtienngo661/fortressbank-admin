@@ -46,17 +46,18 @@ export const DepositModal: React.FC<DepositModalProps> = ({
   const [loading, setLoading] = useState(false);
 
   React.useEffect(() => {
-    if (prefilledAccountNumber) {
-      setAccountNumber(prefilledAccountNumber);
+    if (open) {
+      if (prefilledAccountNumber) {
+        setAccountNumber(prefilledAccountNumber);
+      }
+      setAmount("");
+      setDescription("");
+      setError("");
+      setSuccess(false);
     }
-  }, [prefilledAccountNumber]);
+  }, [open, prefilledAccountNumber]);
 
   const handleClose = () => {
-    setAccountNumber("");
-    setAmount("");
-    setDescription("");
-    setError("");
-    setSuccess(false);
     onClose();
   };
 
@@ -190,13 +191,18 @@ export const DepositModal: React.FC<DepositModalProps> = ({
             required
             fullWidth
             label="Amount"
-            type="number"
+            type="text"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              // Only allow digits and one decimal point with up to 2 decimal places
+              if (/^\d*\.?\d{0,2}$/.test(value)) {
+                setAmount(value);
+              }
+            }}
             InputProps={{
               startAdornment: <InputAdornment position="start">$</InputAdornment>,
             }}
-            inputProps={{ min: 0.01, step: 0.01 }}
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 2,

@@ -35,7 +35,6 @@ export interface UpdateAccountRequest {
 }
 
 export interface UpdatePinRequest {
-  oldPin: string;
   newPin: string;
 }
 
@@ -43,6 +42,13 @@ export interface DepositRequest {
   accountNumber: string;
   amount: number;
   description?: string;
+}
+
+export interface CreateAccountRequest {
+  userId: string;
+  accountNumberType: "PHONE_NUMBER" | "AUTO_GENERATE";
+  phoneNumber?: string;
+  pin?: string;
 }
 
 // Auth types
@@ -64,6 +70,18 @@ export interface User {
 export interface LoginRequest {
   username: string;
   password: string;
+}
+
+export interface AdminUserResponse {
+  id: string;
+  username: string;
+  email: string;
+  fullName: string;
+  citizenId: string;
+  dob: string;
+  phoneNumber: string;
+  enabled: boolean;
+  createdAt: string;
 }
 
 // User Management types
