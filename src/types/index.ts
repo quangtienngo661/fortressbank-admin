@@ -97,6 +97,45 @@ export interface AdminUser {
   createdAt: string; // ISO datetime string
 }
 
+// Dashboard Statistics types
+export type PeriodType = 'TODAY' | 'THIS_WEEK' | 'THIS_MONTH' | 'THIS_YEAR' | 'CUSTOM';
+
+export interface AccountStats {
+  totalAccounts: number;
+  activeAccounts: number;
+  lockedAccounts: number;
+  closedAccounts: number;
+}
+
+export interface DashboardStatisticsResponse {
+  startDate: string;
+  endDate: string;
+  periodLabel: string;
+  // Transaction metrics
+  totalTransactions: number;
+  successfulTransactions: number;
+  failedTransactions: number;
+  pendingTransactions: number;
+  // Financial metrics
+  totalVolume: number;
+  totalFees: number;
+  averageTransactionAmount: number;
+  // Transaction type breakdown
+  internalTransfers: number;
+  externalTransfers: number;
+  deposits: number;
+  withdrawals: number;
+  billPayments: number;
+  // Account statistics
+  accountStats: AccountStats;
+}
+
+export interface DashboardStatisticsRequest {
+  period?: PeriodType;
+  startDate?: string;
+  endDate?: string;
+}
+
 export interface CreateUserRequest {
   username: string;
   email: string;
