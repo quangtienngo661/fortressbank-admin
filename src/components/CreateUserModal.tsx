@@ -17,6 +17,7 @@ import {
   FormControlLabel,
   Checkbox,
   Grid,
+  InputAdornment,
 } from "@mui/material";
 import type { TransitionProps } from "@mui/material/transitions";
 import { PersonAdd as PersonAddIcon } from "@mui/icons-material";
@@ -50,7 +51,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
     fullName: "",
     dob: "",
     citizenId: "",
-    phoneNumber: "",
+    phoneNumber: "+84",
     accountNumberType: "AUTO_GENERATE",
     pin: "",
     createCard: true,
@@ -68,7 +69,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
       fullName: "",
       dob: "",
       citizenId: "",
-      phoneNumber: "",
+      phoneNumber: "+84",
       accountNumberType: "AUTO_GENERATE",
       pin: "",
       createCard: true,
@@ -125,9 +126,10 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
       return "Citizen ID must be 9 or 12 digits";
     }
 
-    // Phone validation
-    if (!formData.phoneNumber || !/^[0-9]{10,11}$/.test(formData.phoneNumber)) {
-      return "Phone number must be 10 or 11 digits";
+    // Phone validation - expecting format without +84 prefix (will be added in display)
+    const phoneDigits = formData.phoneNumber.replace(/^\+84/, '');
+    if (!phoneDigits || !/^[0-9]{9,10}$/.test(phoneDigits)) {
+      return "Phone number must be 9 or 10 digits (after +84)";
     }
 
     // PIN validation
@@ -168,7 +170,22 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   const handleChange = (field: keyof CreateUserRequest) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | { target: { value: any } }
   ) => {
-    const value = e.target.value;
+    let value = e.target.value;
+    
+    // Special handling for phone number to ensure +84 prefix
+    if (field === 'phoneNumber') {
+      // Remove any non-digit characters except +
+      value = value.replace(/[^\d+]/g, '');
+      // Ensure +84 prefix
+      if (!value.startsWith('+84')) {
+        value = '+84' + value.replace(/^\+?84?/, '');
+      }
+      // Limit to +84 + 10 digits
+      if (value.length > 13) {
+        value = value.substring(0, 13);
+      }
+    }
+    
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -404,9 +421,13 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                 required
                 fullWidth
                 label="Phone Number"
-                value={formData.phoneNumber}
+                value={formData.phoneNumber || '+84'}
                 onChange={handleChange("phoneNumber")}
-                helperText="10 or 11 digits"
+                placeholder="+84xxxxxxxxx"
+                helperText="Format: +84 + 9-10 digits"
+                inputProps={{
+                  inputMode: 'tel',
+                }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: 2,
