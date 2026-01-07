@@ -57,6 +57,7 @@ import { UpdatePinModal } from "../components/UpdatePinModal";
 import { DepositModal } from "../components/DepositModal";
 import { CreateAccountModal } from "../components/CreateAccountModal";
 import { UserManagementPage } from "./UserManagementPage";
+import { DashboardStatisticsPage } from "./DashboardStatisticsPage";
 import type { Account, AccountStatus } from "../types";
 
 export const DashboardPage: React.FC = () => {
@@ -69,7 +70,7 @@ export const DashboardPage: React.FC = () => {
   
   // Navigation state
   const [drawerOpen, setDrawerOpen] = useState(true);
-  const [currentPage, setCurrentPage] = useState("accounts");
+  const [currentPage, setCurrentPage] = useState("statistics");
   
   // Menu state
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -198,6 +199,7 @@ export const DashboardPage: React.FC = () => {
   const drawerWidth = 260;
 
   const menuItems = [
+    { id: "statistics", label: "Dashboard Statistics", icon: <DashboardIcon /> },
     { id: "accounts", label: "Account Management", icon: <AccountBalanceIcon /> },
     { id: "users", label: "Users", icon: <PeopleIcon /> },
     // { id: "transactions", label: "Transactions", icon: <AssignmentIcon /> },
@@ -626,6 +628,8 @@ export const DashboardPage: React.FC = () => {
               />
               </Paper>
             </Fade>
+          ) : currentPage === "statistics" ? (
+            <DashboardStatisticsPage />
           ) : currentPage === "users" ? (
             <UserManagementPage />
           ) : (
