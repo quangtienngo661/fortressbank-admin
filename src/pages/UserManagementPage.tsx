@@ -48,6 +48,10 @@ export const UserManagementPage: React.FC = () => {
   const [error, setError] = useState("");
   const [searchKeyword, setSearchKeyword] = useState("");
 
+  // Filter users by status
+  const enabledUsers = users.filter(user => user.isEnable === true);
+  const disabledUsers = users.filter(user => user.isEnable === false);
+
   // Menu state
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
@@ -133,12 +137,12 @@ export const UserManagementPage: React.FC = () => {
     }
   };
 
-  const getStatusColor = (enabled: boolean) => {
-    return enabled ? "success" : "error";
+  const getStatusColor = (isEnable: boolean) => {
+    return isEnable ? "success" : "error";
   };
 
-  const getStatusLabel = (enabled: boolean) => {
-    return enabled ? "Active" : "Locked";
+  const getStatusLabel = (isEnable: boolean) => {
+    return isEnable ? "Active" : "Locked";
   };
 
   return (
@@ -225,98 +229,189 @@ export const UserManagementPage: React.FC = () => {
           </Fade>
         )}
 
-        <TableContainer
-          sx={{
-            borderRadius: 2,
-            overflow: "hidden",
-          }}
-        >
-          <Table>
-            <TableHead>
-              <TableRow
+        {loading ? (
+          <Box sx={{ textAlign: "center", py: 4 }}>
+            <Typography>Loading...</Typography>
+          </Box>
+        ) : (
+          <>
+            {/* ENABLED Users Section */}
+            <Box sx={{ mb: 4 }}>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <Chip
+                  label="ENABLED"
+                  color="success"
+                  sx={{ fontWeight: 600, mr: 2 }}
+                />
+                <Typography variant="body2" color="text.secondary">
+                  {enabledUsers.length} user(s)
+                </Typography>
+              </Box>
+              <TableContainer
                 sx={{
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  borderRadius: 2,
+                  overflow: "hidden",
+                  border: "2px solid rgba(76, 175, 80, 0.3)",
                 }}
               >
-                <TableCell sx={{ color: "white", fontWeight: 600 }}>Username</TableCell>
-                <TableCell sx={{ color: "white", fontWeight: 600 }}>Email</TableCell>
-                <TableCell sx={{ color: "white", fontWeight: 600 }}>Full Name</TableCell>
-                <TableCell sx={{ color: "white", fontWeight: 600 }}>Phone</TableCell>
-                <TableCell sx={{ color: "white", fontWeight: 600 }}>Status</TableCell>
-                <TableCell sx={{ color: "white", fontWeight: 600 }}>Created At</TableCell>
-                <TableCell align="right" sx={{ color: "white", fontWeight: 600 }}>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center">
-                    Loading...
-                  </TableCell>
-                </TableRow>
-              ) : users.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center">
-                    No users found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                users.map((user, index) => (
-                  <Grow
-                    in
-                    key={user.id}
-                    timeout={300 + index * 100}
-                  >
+                <Table>
+                  <TableHead>
                     <TableRow
                       sx={{
-                        transition: "all 0.3s ease",
-                        "&:hover": {
-                          background: "linear-gradient(90deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)",
-                          transform: "scale(1.01)",
-                          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-                        },
+                        background: "linear-gradient(135deg, #4caf50 0%, #81c784 100%)",
                       }}
                     >
-                      <TableCell sx={{ fontWeight: 500 }}>{user.username}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.fullName || "N/A"}</TableCell>
-                      <TableCell>{user.phoneNumber || "N/A"}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={getStatusLabel(user.enabled)}
-                          color={getStatusColor(user.enabled)}
-                          size="small"
-                          sx={{
-                            fontWeight: 600,
-                            borderRadius: 2,
-                            px: 1,
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {new Date(user.createdAt).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell align="right">
-                        <IconButton
-                          onClick={(e) => handleMenuOpen(e, user)}
-                          sx={{
-                            transition: "all 0.3s",
-                            "&:hover": {
-                              background: "linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)",
-                              transform: "rotate(90deg)",
-                            },
-                          }}
-                        >
-                          <MoreVertIcon />
-                        </IconButton>
-                      </TableCell>
+                      <TableCell sx={{ color: "white", fontWeight: 600 }}>Username</TableCell>
+                      <TableCell sx={{ color: "white", fontWeight: 600 }}>Email</TableCell>
+                      <TableCell sx={{ color: "white", fontWeight: 600 }}>Full Name</TableCell>
+                      <TableCell sx={{ color: "white", fontWeight: 600 }}>Phone</TableCell>
+                      <TableCell sx={{ color: "white", fontWeight: 600 }}>Created At</TableCell>
+                      <TableCell align="right" sx={{ color: "white", fontWeight: 600 }}>Actions</TableCell>
                     </TableRow>
-                  </Grow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {enabledUsers.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} align="center">
+                          No enabled users
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      enabledUsers.map((user, index) => (
+                        <Grow
+                          in
+                          key={user.id}
+                          timeout={300 + index * 100}
+                        >
+                          <TableRow
+                            sx={{
+                              transition: "all 0.3s ease",
+                              "&:hover": {
+                                background: "rgba(76, 175, 80, 0.05)",
+                                transform: "scale(1.01)",
+                                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+                              },
+                            }}
+                          >
+                            <TableCell sx={{ fontWeight: 500 }}>{user.username}</TableCell>
+                            <TableCell>{user.email}</TableCell>
+                            <TableCell>{user.fullName || "N/A"}</TableCell>
+                            <TableCell>{user.phoneNumber || "N/A"}</TableCell>
+                            <TableCell>
+                              {new Date(user.createdAt).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell align="right">
+                              <IconButton
+                                onClick={(e) => handleMenuOpen(e, user)}
+                                sx={{
+                                  transition: "all 0.3s",
+                                  "&:hover": {
+                                    background: "rgba(76, 175, 80, 0.1)",
+                                    transform: "rotate(90deg)",
+                                  },
+                                }}
+                              >
+                                <MoreVertIcon />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        </Grow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+
+            {/* DISABLED Users Section */}
+            <Box>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <Chip
+                  label="DISABLED"
+                  color="error"
+                  sx={{ fontWeight: 600, mr: 2 }}
+                />
+                <Typography variant="body2" color="text.secondary">
+                  {disabledUsers.length} user(s)
+                </Typography>
+              </Box>
+              <TableContainer
+                sx={{
+                  borderRadius: 2,
+                  overflow: "hidden",
+                  border: "2px solid rgba(244, 67, 54, 0.3)",
+                }}
+              >
+                <Table>
+                  <TableHead>
+                    <TableRow
+                      sx={{
+                        background: "linear-gradient(135deg, #f44336 0%, #ef5350 100%)",
+                      }}
+                    >
+                      <TableCell sx={{ color: "white", fontWeight: 600 }}>Username</TableCell>
+                      <TableCell sx={{ color: "white", fontWeight: 600 }}>Email</TableCell>
+                      <TableCell sx={{ color: "white", fontWeight: 600 }}>Full Name</TableCell>
+                      <TableCell sx={{ color: "white", fontWeight: 600 }}>Phone</TableCell>
+                      <TableCell sx={{ color: "white", fontWeight: 600 }}>Created At</TableCell>
+                      <TableCell align="right" sx={{ color: "white", fontWeight: 600 }}>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {disabledUsers.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} align="center">
+                          No disabled users
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      disabledUsers.map((user, index) => (
+                        <Grow
+                          in
+                          key={user.id}
+                          timeout={300 + index * 100}
+                        >
+                          <TableRow
+                            sx={{
+                              transition: "all 0.3s ease",
+                              "&:hover": {
+                                background: "rgba(244, 67, 54, 0.05)",
+                                transform: "scale(1.01)",
+                                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+                              },
+                            }}
+                          >
+                            <TableCell sx={{ fontWeight: 500 }}>{user.username}</TableCell>
+                            <TableCell>{user.email}</TableCell>
+                            <TableCell>{user.fullName || "N/A"}</TableCell>
+                            <TableCell>{user.phoneNumber || "N/A"}</TableCell>
+                            <TableCell>
+                              {new Date(user.createdAt).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell align="right">
+                              <IconButton
+                                onClick={(e) => handleMenuOpen(e, user)}
+                                sx={{
+                                  transition: "all 0.3s",
+                                  "&:hover": {
+                                    background: "rgba(244, 67, 54, 0.1)",
+                                    transform: "rotate(90deg)",
+                                  },
+                                }}
+                              >
+                                <MoreVertIcon />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        </Grow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          </>
+        )}
 
         <TablePagination
           component="div"
@@ -348,7 +443,7 @@ export const UserManagementPage: React.FC = () => {
             <EditIcon sx={{ mr: 1 }} fontSize="small" />
             Update User
           </MenuItem>
-          {selectedUser?.enabled ? (
+          {selectedUser?.isEnable ? (
             <MenuItem onClick={handleLockUser}>
               <LockIcon sx={{ mr: 1 }} fontSize="small" />
               Lock User
@@ -414,8 +509,8 @@ export const UserManagementPage: React.FC = () => {
                 <Box>
                   <Typography variant="caption" color="text.secondary">Status</Typography>
                   <Chip
-                    label={getStatusLabel(selectedUser.enabled)}
-                    color={getStatusColor(selectedUser.enabled)}
+                    label={getStatusLabel(selectedUser.isEnable)}
+                    color={getStatusColor(selectedUser.isEnable)}
                     size="small"
                     sx={{ mt: 0.5 }}
                   />

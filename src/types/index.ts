@@ -80,7 +80,7 @@ export interface AdminUserResponse {
   citizenId: string;
   dob: string;
   phoneNumber: string;
-  enabled: boolean;
+  isEnable: boolean;
   createdAt: string;
 }
 
@@ -93,7 +93,7 @@ export interface AdminUser {
   citizenId: string;
   dob: string; // ISO date string
   phoneNumber: string;
-  enabled: boolean;
+  isEnable: boolean;
   createdAt: string; // ISO datetime string
 }
 
